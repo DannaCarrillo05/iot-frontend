@@ -9,135 +9,38 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LogoutRouteImport } from './routes/logout'
-import { Route as PrivateRouteRouteImport } from './routes/_private/route'
-import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PrivateUsuarioRouteImport } from './routes/_private/usuario'
-import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
-import { Route as PrivateUsuarioIdRouteImport } from './routes/_private/usuario.$id'
 
-const LogoutRoute = LogoutRouteImport.update({
-  id: '/logout',
-  path: '/logout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivateRouteRoute = PrivateRouteRouteImport.update({
-  id: '/_private',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRouteRoute = AuthRouteRouteImport.update({
-  id: '/_auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PrivateUsuarioRoute = PrivateUsuarioRouteImport.update({
-  id: '/usuario',
-  path: '/usuario',
-  getParentRoute: () => PrivateRouteRoute,
-} as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivateUsuarioIdRoute = PrivateUsuarioIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => PrivateUsuarioRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/logout': typeof LogoutRoute
-  '/login': typeof AuthLoginRoute
-  '/usuario': typeof PrivateUsuarioRouteWithChildren
-  '/usuario/$id': typeof PrivateUsuarioIdRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/logout': typeof LogoutRoute
-  '/login': typeof AuthLoginRoute
-  '/usuario': typeof PrivateUsuarioRouteWithChildren
-  '/usuario/$id': typeof PrivateUsuarioIdRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_auth': typeof AuthRouteRouteWithChildren
-  '/_private': typeof PrivateRouteRouteWithChildren
-  '/logout': typeof LogoutRoute
-  '/_auth/login': typeof AuthLoginRoute
-  '/_private/usuario': typeof PrivateUsuarioRouteWithChildren
-  '/_private/usuario/$id': typeof PrivateUsuarioIdRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/logout'
-    | '/login'
-    | '/usuario'
-    | '/usuario/$id'
-    | '/api/auth/$'
+  fullPaths: '/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/logout' | '/login' | '/usuario' | '/usuario/$id' | '/api/auth/$'
-  id:
-    | '__root__'
-    | '/'
-    | '/_auth'
-    | '/_private'
-    | '/logout'
-    | '/_auth/login'
-    | '/_private/usuario'
-    | '/_private/usuario/$id'
-    | '/api/auth/$'
+  to: '/'
+  id: '__root__' | '/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRouteRoute: typeof AuthRouteRouteWithChildren
-  PrivateRouteRoute: typeof PrivateRouteRouteWithChildren
-  LogoutRoute: typeof LogoutRoute
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/logout': {
-      id: '/logout'
-      path: '/logout'
-      fullPath: '/logout'
-      preLoaderRoute: typeof LogoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_private': {
-      id: '/_private'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof PrivateRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -145,79 +48,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_private/usuario': {
-      id: '/_private/usuario'
-      path: '/usuario'
-      fullPath: '/usuario'
-      preLoaderRoute: typeof PrivateUsuarioRouteImport
-      parentRoute: typeof PrivateRouteRoute
-    }
-    '/_auth/login': {
-      id: '/_auth/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_private/usuario/$id': {
-      id: '/_private/usuario/$id'
-      path: '/$id'
-      fullPath: '/usuario/$id'
-      preLoaderRoute: typeof PrivateUsuarioIdRouteImport
-      parentRoute: typeof PrivateUsuarioRoute
-    }
   }
 }
 
-interface AuthRouteRouteChildren {
-  AuthLoginRoute: typeof AuthLoginRoute
-}
-
-const AuthRouteRouteChildren: AuthRouteRouteChildren = {
-  AuthLoginRoute: AuthLoginRoute,
-}
-
-const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
-  AuthRouteRouteChildren,
-)
-
-interface PrivateUsuarioRouteChildren {
-  PrivateUsuarioIdRoute: typeof PrivateUsuarioIdRoute
-}
-
-const PrivateUsuarioRouteChildren: PrivateUsuarioRouteChildren = {
-  PrivateUsuarioIdRoute: PrivateUsuarioIdRoute,
-}
-
-const PrivateUsuarioRouteWithChildren = PrivateUsuarioRoute._addFileChildren(
-  PrivateUsuarioRouteChildren,
-)
-
-interface PrivateRouteRouteChildren {
-  PrivateUsuarioRoute: typeof PrivateUsuarioRouteWithChildren
-}
-
-const PrivateRouteRouteChildren: PrivateRouteRouteChildren = {
-  PrivateUsuarioRoute: PrivateUsuarioRouteWithChildren,
-}
-
-const PrivateRouteRouteWithChildren = PrivateRouteRoute._addFileChildren(
-  PrivateRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRouteRoute: AuthRouteRouteWithChildren,
-  PrivateRouteRoute: PrivateRouteRouteWithChildren,
-  LogoutRoute: LogoutRoute,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -156,16 +156,34 @@ export function Select({
 	)
 }
 
-export function Slider({ label }: { label: string }) {
+export function Slider({
+	label,
+	min = 0,
+	max = 100,
+	step = 1,
+}: {
+	label: string
+	min?: number
+	max?: number
+	step?: number
+}) {
 	const field = useFieldContext<number>()
 	const errors = useStore(field.store, (state) => state.meta.errors)
 	const hasErrors = errors.length > 0 && field.state.meta.isTouched
 
 	return (
 		<Field data-invalid={hasErrors}>
-			<FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+			<div className="flex items-center justify-between">
+				<FieldLabel htmlFor={field.name}>{label}</FieldLabel>
+				<span className="text-muted-foreground text-xs font-medium">
+					{field.state.value}
+				</span>
+			</div>
 			<ShadcnSlider
 				id={field.name}
+				min={min}
+				max={max}
+				step={step}
 				onBlur={field.handleBlur}
 				value={[field.state.value]}
 				onValueChange={(value) => field.handleChange(value[0])}

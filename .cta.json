@@ -1,5 +1,5 @@
 {
-	"projectName": "mederi",
+	"projectName": "iot",
 	"mode": "file-router",
 	"typescript": true,
 	"tailwind": true,

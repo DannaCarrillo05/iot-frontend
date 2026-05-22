@@ -6,7 +6,6 @@ import {
 	Scripts,
 } from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
-import { findUser } from "@/features/auth/authentication"
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools"
 import appCss from "../styles.css?url"
 
@@ -25,7 +24,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "Mederi",
+				title: "Dashboard de Invernadero",
 			},
 		],
 		links: [
@@ -41,12 +40,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 	}),
 
 	shellComponent: RootDocument,
-	beforeLoad: async () => {
-		const user = await findUser()
-		return {
-			user,
-		}
-	},
 })
 
 function RootDocument({ children }: { children: React.ReactNode }) {
