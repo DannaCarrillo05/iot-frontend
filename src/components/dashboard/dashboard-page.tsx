@@ -1,5 +1,3 @@
-import { useEffect, useMemo, useState } from "react"
-import { Settings2 } from "lucide-react"
 import { AlertsPanel } from "@/components/alerts/alerts-panel"
 import { RecommendationsPanel } from "@/components/alerts/recommendations-panel"
 import { ActivityChart } from "@/components/charts/activity-chart"
@@ -7,6 +5,7 @@ import { LightChart } from "@/components/charts/light-chart"
 import { TemperatureHumidityChart } from "@/components/charts/temperature-humidity-chart"
 import { WaterLevelChart } from "@/components/charts/water-level-chart"
 import { CropStatusPanel } from "@/components/dashboard/crop-status-panel"
+import { NodeChartsSection } from "@/components/dashboard/node-charts-section"
 import { SensorSummaryGrid } from "@/components/dashboard/sensor-summary-grid"
 import { LightingScheduleForm } from "@/components/forms/lighting-schedule-form"
 import { SensorConfigForm } from "@/components/forms/sensor-config-form"
@@ -16,9 +15,8 @@ import { GreenhouseMap } from "@/components/greenhouse/greenhouse-map"
 import { AppHeader } from "@/components/layout/app-header"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { PageContainer } from "@/components/layout/page-container"
-import { GreenhouseCard } from "@/components/ui/greenhouse-card"
-import { VineSeparator } from "@/components/ui/vine-separator"
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { GreenhouseCard } from "@/components/ui/greenhouse-card"
 import {
 	Select,
 	SelectContent,
@@ -27,9 +25,15 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { VineSeparator } from "@/components/ui/vine-separator"
 import { useCropStatus } from "@/hooks/use-crop-status"
 import { useSensorData } from "@/hooks/use-sensor-data"
-import { sectionDescriptionClass, sectionTitleClass } from "@/lib/greenhouse-styles"
+import {
+	sectionDescriptionClass,
+	sectionTitleClass,
+} from "@/lib/greenhouse-styles"
+import { Settings2 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 
 export function DashboardPage() {
 	const {
@@ -123,6 +127,10 @@ export function DashboardPage() {
 						<ActivityChart data={chartData.activity} />
 					</div>
 				</section>
+
+				<VineSeparator />
+
+				<NodeChartsSection />
 
 				<VineSeparator />
 

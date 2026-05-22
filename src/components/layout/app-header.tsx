@@ -1,6 +1,5 @@
 import { BellRing, Leaf, ShieldCheck, Sprout } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { dashboardCardAccentClass } from "@/lib/greenhouse-styles"
 import { cn } from "@/lib/utils"
 
 type AppHeaderProps = {
@@ -17,7 +16,6 @@ export function AppHeader({ alertCount, health, state }: AppHeaderProps) {
 				"border border-green-200/70 bg-white/85 p-5 shadow-sm backdrop-blur-md",
 			)}
 		>
-			<div className={dashboardCardAccentClass} />
 			<div className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-green-200/25" />
 
 			<div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

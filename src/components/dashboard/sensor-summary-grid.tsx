@@ -7,7 +7,7 @@ type SensorSummaryGridProps = {
 
 export function SensorSummaryGrid({ summaries }: SensorSummaryGridProps) {
 	return (
-		<section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+		<section className="grid auto-rows-fr gap-4 md:grid-cols-2 xl:grid-cols-5">
 			{summaries.map((summary) => (
 				<SensorSummaryCard key={summary.type} summary={summary} />
 			))}

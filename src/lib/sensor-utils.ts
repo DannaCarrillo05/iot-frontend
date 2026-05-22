@@ -35,7 +35,7 @@ export const sensorDescriptions: Record<SensorType, string> = {
 export function formatSensorValue(type: SensorType, value: number) {
 	switch (type) {
 		case "activity":
-			return value > 0 ? "Detectada" : "Sin actividad"
+			return value > 0 ? "Detectada" : "Inactiva"
 		case "temperature":
 			return value.toFixed(1)
 		case "light":

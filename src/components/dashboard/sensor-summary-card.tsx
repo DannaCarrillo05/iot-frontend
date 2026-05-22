@@ -1,3 +1,9 @@
+import { Badge } from "@/components/ui/badge"
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { GreenhouseCard } from "@/components/ui/greenhouse-card"
+import type { SensorSummary } from "@/hooks/use-sensor-data"
+import { iconBadgeClass, sensorAccentColors } from "@/lib/greenhouse-styles"
+import { getStatusBadgeVariant } from "@/lib/status-utils"
 import type { LucideIcon } from "lucide-react"
 import {
 	Droplets,
@@ -7,12 +13,6 @@ import {
 	ThermometerSun,
 	WalletCards,
 } from "lucide-react"
-import type { SensorSummary } from "@/hooks/use-sensor-data"
-import { getStatusBadgeVariant } from "@/lib/status-utils"
-import { iconBadgeClass } from "@/lib/greenhouse-styles"
-import { GreenhouseCard } from "@/components/ui/greenhouse-card"
-import { Badge } from "@/components/ui/badge"
-import { CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 const sensorIcons: Record<SensorSummary["type"], LucideIcon> = {
 	humidity: Droplets,
@@ -30,8 +30,11 @@ export function SensorSummaryCard({ summary }: SensorSummaryCardProps) {
 	const Icon = sensorIcons[summary.type]
 
 	return (
-		<GreenhouseCard className="h-full">
-			<CardHeader className="space-y-3">
+		<GreenhouseCard
+			className="flex h-full flex-col"
+			accentColor={sensorAccentColors[summary.type]}
+		>
+			<CardHeader className="space-y-3 pb-0">
 				<div className="flex items-start justify-between gap-3">
 					<div className={iconBadgeClass}>
 						<Icon className="size-5" />
@@ -42,22 +45,24 @@ export function SensorSummaryCard({ summary }: SensorSummaryCardProps) {
 				</div>
 				<div className="space-y-1">
 					<CardTitle className="text-green-950">{summary.label}</CardTitle>
-					<p className="text-sm text-green-800/70">{summary.description}</p>
-				</div>
-			</CardHeader>
-			<CardContent className="flex items-end justify-between">
-				<div>
-					<p className="text-3xl font-bold tracking-tight text-green-950">
-						{summary.formattedValue}
-						{summary.unit && (
-							<span className="ml-1 text-lg font-medium text-green-800/70">
-								{summary.unit}
-							</span>
-						)}
+					<p className="min-h-[3.75rem] text-sm leading-snug text-green-800/70">
+						{summary.description}
 					</p>
 				</div>
+			</CardHeader>
+			<CardContent className="mt-auto flex flex-col gap-3 pt-0">
+				<div className="flex min-h-9 items-baseline">
+					<span className="text-3xl font-bold tracking-tight text-green-950">
+						{summary.formattedValue}
+					</span>
+					{summary.unit ? (
+						<span className="ml-1 text-lg font-medium text-green-800/70">
+							{summary.unit}
+						</span>
+					) : null}
+				</div>
 				<div className="flex items-center gap-1 text-xs text-green-700/70">
-					<MoveUpRight className="size-3.5" />
+					<MoveUpRight className="size-3.5 shrink-0" />
 					<span>Actualizado</span>
 				</div>
 			</CardContent>
