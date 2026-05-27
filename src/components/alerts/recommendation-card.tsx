@@ -1,5 +1,6 @@
 import { ArrowRight, Sparkles } from "lucide-react"
 import type { Recommendation } from "@/schemas/recommendation.schema"
+import { getPriorityLabel } from "@/lib/status-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,7 +29,7 @@ export function RecommendationCard({
 						<CardTitle className="text-green-950">{recommendation.title}</CardTitle>
 					</div>
 					<Badge variant={priorityVariant[recommendation.priority]}>
-						{recommendation.priority}
+						{getPriorityLabel(recommendation.priority)}
 					</Badge>
 				</div>
 			</CardHeader>

@@ -5,6 +5,7 @@ export const nodePresetSchema = z.enum([
 	"clima_externo",
 	"energia",
 	"cultivo_cacao",
+	"esp32",
 ])
 
 export type NodePreset = z.infer<typeof nodePresetSchema>
@@ -14,6 +15,7 @@ export const nodeVariableSchema = z.object({
 	label: z.string(),
 	unit: z.string(),
 	decimals: z.number().int().min(0).max(3).default(1),
+	valueType: z.enum(["number", "boolean"]).default("number"),
 })
 
 export type NodeVariable = z.infer<typeof nodeVariableSchema>

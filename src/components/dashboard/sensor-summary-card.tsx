@@ -9,9 +9,11 @@ import {
 	Droplets,
 	MoveUpRight,
 	Radar,
+	Signal,
 	SunMedium,
 	ThermometerSun,
 	WalletCards,
+	Zap,
 } from "lucide-react"
 
 const sensorIcons: Record<SensorSummary["type"], LucideIcon> = {
@@ -20,6 +22,10 @@ const sensorIcons: Record<SensorSummary["type"], LucideIcon> = {
 	light: SunMedium,
 	activity: Radar,
 	waterLevel: WalletCards,
+	voltage: Zap,
+	current: Zap,
+	power: Zap,
+	signal: Signal,
 }
 
 type SensorSummaryCardProps = {

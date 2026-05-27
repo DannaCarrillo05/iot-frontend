@@ -1,6 +1,6 @@
 import { AlertTriangle } from "lucide-react"
 import type { Alert } from "@/schemas/alert.schema"
-import { getStatusBadgeVariant } from "@/lib/status-utils"
+import { getAlertSeverityLabel, getStatusBadgeVariant } from "@/lib/status-utils"
 import { Badge } from "@/components/ui/badge"
 
 type AlertItemProps = {
@@ -20,7 +20,7 @@ export function AlertItem({ alert }: AlertItemProps) {
 						<p className="mt-1 text-sm text-green-800/70">{alert.message}</p>
 					</div>
 				</div>
-				<Badge variant={getStatusBadgeVariant(alert.severity)}>{alert.severity}</Badge>
+				<Badge variant={getStatusBadgeVariant(alert.severity)}>{getAlertSeverityLabel(alert.severity)}</Badge>
 			</div>
 			<div className="text-xs text-green-700/70">
 				{alert.zoneId ? `Zona: ${alert.zoneId}` : "Sistema general"}

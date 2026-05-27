@@ -18,7 +18,9 @@ export function DashboardLayout({
 			<GreenhouseBackground />
 
 			<div className="relative z-10">
-				<div className="mx-auto max-w-7xl px-6 pt-6">{header}</div>
+				<div className="mx-auto w-full max-w-[1600px] px-4 pt-6 sm:px-6 2xl:px-8">
+						{header}
+					</div>
 				<main className={cn("pb-10", className)}>{children}</main>
 			</div>
 		</div>

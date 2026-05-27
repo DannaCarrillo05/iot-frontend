@@ -9,13 +9,15 @@ import {
 	CardTitle,
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import type { Alert as SensorAlert } from "@/schemas/alert.schema"
+import { AlertItem } from "@/components/alerts/alert-item"
 
 type CropStatusPanelProps = {
 	state: string
 	health: number
 	summary: string
 	observations: string[]
-	alertCount: number
+	alerts: SensorAlert[]
 }
 
 export function CropStatusPanel({
@@ -23,8 +25,9 @@ export function CropStatusPanel({
 	health,
 	summary,
 	observations,
-	alertCount,
+	alerts,
 }: CropStatusPanelProps) {
+	const alertCount = alerts.length
 	return (
 		<GreenhouseCard className="h-full">
 			<CardHeader className="space-y-4">
@@ -80,6 +83,14 @@ export function CropStatusPanel({
 						? `Hay ${alertCount} alertas activas que requieren seguimiento.`
 						: "No hay alertas activas en este momento."}
 				</div>
+
+				{alertCount > 0 && (
+					<div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+						{alerts.map((alert) => (
+							<AlertItem key={alert.id} alert={alert} />
+						))}
+					</div>
+				)}
 			</CardContent>
 		</GreenhouseCard>
 	)
