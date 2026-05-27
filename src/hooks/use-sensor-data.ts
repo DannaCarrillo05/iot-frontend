@@ -1,15 +1,15 @@
-import { useMemo, useState } from "react"
-import { mockAlerts } from "@/data/mock-alerts"
-import { mockDashboardConfig } from "@/data/mock-dashboard-config"
-import { mockReadings } from "@/data/mock-readings"
-import { mockSensors } from "@/data/mock-sensors"
-import { mockZones } from "@/data/mock-zones"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import { useDeferredValue, useMemo, useState } from "react"
+import type { mockDashboardConfig } from "@/data/mock-dashboard-config"
+import { getTelemetryDashboardData } from "@/features/telemetry/telemetry-data"
+import type { ChartRangeDays } from "@/lib/chart-range"
 import {
-	buildActivitySeries,
+	buildActivityCountSeries,
+	buildDistanceSeries,
 	buildEnvironmentSeries,
 	buildLightSeries,
-	buildWaterLevelSeries,
 } from "@/lib/chart-utils"
+import { buildAllNodeCharts } from "@/lib/node-chart-utils"
 import {
 	formatSensorUnit,
 	formatSensorValue,
@@ -25,6 +25,16 @@ import {
 	getZoneStatus,
 	sortZonesBySeverity,
 } from "@/lib/status-utils"
+import {
+	buildNodeReadings,
+	buildTelemetryMeasurementIndex,
+	buildTelemetryNodes,
+	buildTelemetrySensorReadings,
+	buildTelemetrySensors,
+	buildTelemetryZones,
+	emptyTelemetryData,
+	telemetryDashboardConfig,
+} from "@/lib/telemetry-dashboard-utils"
 import { dashboardConfigSchema } from "@/schemas/dashboard-config.schema"
 import type { Sensor, SensorStatus, SensorType } from "@/schemas/sensor.schema"
 import type { Zone, ZoneStatus } from "@/schemas/zone.schema"
@@ -39,16 +49,82 @@ export type SensorSummary = {
 	description: string
 }
 
-export function useSensorData() {
-	const [config, setConfig] = useState(mockDashboardConfig)
-	const [zones, setZones] = useState(mockZones)
-	const [sensors, setSensors] = useState(mockSensors)
+type EditableSensorFields = Pick<
+	Sensor,
+	"name" | "type" | "zoneId" | "unit" | "active"
+>
+
+export function useSensorData(
+	chartRangeDays: ChartRangeDays,
+	nodeChartRangeDays: ChartRangeDays = chartRangeDays,
+) {
+	const queryRangeDays = Math.max(chartRangeDays, nodeChartRangeDays) as ChartRangeDays
+	const telemetryQuery = useQuery({
+		queryKey: ["telemetry-dashboard", queryRangeDays],
+		queryFn: () => getTelemetryDashboardData({ data: queryRangeDays }),
+		placeholderData: keepPreviousData,
+	})
+	const [config, setConfig] = useState(telemetryDashboardConfig)
 	const [selectedZoneId, setSelectedZoneId] = useState(config.defaultZoneId)
 
-	const alerts = useMemo(() => {
-		const generated = generateAlerts(sensors, config)
-		return generated.length > 0 ? generated : mockAlerts
-	}, [config, sensors])
+	const deferredTelemetryData = useDeferredValue(telemetryQuery.data)
+	const telemetryData = deferredTelemetryData ?? emptyTelemetryData()
+	const isApplyingData = telemetryQuery.data !== deferredTelemetryData
+	const telemetryIndex = useMemo(
+		() => buildTelemetryMeasurementIndex(telemetryData),
+		[telemetryData],
+	)
+
+	const telemetrySensors = useMemo(
+		() => buildTelemetrySensors(telemetryData, telemetryIndex, chartRangeDays),
+		[chartRangeDays, telemetryData, telemetryIndex],
+	)
+	const [sensorOverrides, setSensorOverrides] = useState<
+		Record<string, EditableSensorFields>
+	>({})
+	const sensors = useMemo(
+		() =>
+			telemetrySensors.map((sensor) => {
+				const override = sensorOverrides[sensor.id]
+				if (!override) {
+					return sensor
+				}
+
+				return {
+					...sensor,
+					...override,
+				}
+			}),
+		[sensorOverrides, telemetrySensors],
+	)
+
+	const [zoneOverrides, setZoneOverrides] = useState<Record<string, Zone>>({})
+	const zones = useMemo(
+		() => buildTelemetryZones(telemetryData, sensors, zoneOverrides, telemetryIndex),
+		[sensors, telemetryData, telemetryIndex, zoneOverrides],
+	)
+
+	const sensorReadings = useMemo(
+		() => buildTelemetrySensorReadings(chartRangeDays, telemetryIndex),
+		[chartRangeDays, telemetryIndex],
+	)
+
+	const telemetryNodes = useMemo(
+		() => buildTelemetryNodes(telemetryData, telemetryIndex),
+		[telemetryData, telemetryIndex],
+	)
+
+	const nodeReadings = useMemo(
+		() => buildNodeReadings(telemetryData, nodeChartRangeDays),
+		[nodeChartRangeDays, telemetryData],
+	)
+
+	const nodeCharts = useMemo(
+		() => buildAllNodeCharts(telemetryNodes, nodeReadings),
+		[nodeReadings, telemetryNodes],
+	)
+
+	const alerts = useMemo(() => generateAlerts(sensors, config), [config, sensors])
 
 	const recommendations = useMemo(
 		() => generateRecommendations(alerts),
@@ -77,13 +153,17 @@ export function useSensorData() {
 
 	const charts = useMemo(
 		() => ({
-			environment: buildEnvironmentSeries(mockReadings),
-			light: buildLightSeries(mockReadings),
-			waterLevel: buildWaterLevelSeries(mockReadings),
-			activity: buildActivitySeries(mockReadings),
+			environment: buildEnvironmentSeries(sensorReadings),
+			light: buildLightSeries(sensorReadings),
+			waterLevel: buildDistanceSeries(telemetryData.distanceReadings, chartRangeDays),
+			activity: buildActivityCountSeries(telemetryData.distanceReadings, chartRangeDays),
 		}),
-		[],
+		[chartRangeDays, sensorReadings, telemetryData.distanceReadings],
 	)
+
+	const refreshTelemetry = () => {
+		void telemetryQuery.refetch()
+	}
 
 	const updateThresholds = (
 		values: typeof mockDashboardConfig.thresholds & { alertsEnabled: boolean },
@@ -116,20 +196,23 @@ export function useSensorData() {
 	}
 
 	const saveZone = (zone: Zone) => {
-		setZones((current) => {
-			const exists = current.some((item) => item.id === zone.id)
-			if (exists) {
-				return current.map((item) => (item.id === zone.id ? zone : item))
-			}
-
-			return [...current, zone]
-		})
+		setZoneOverrides((current) => ({
+			...current,
+			[zone.id]: zone,
+		}))
 	}
 
 	const saveSensor = (sensor: Sensor) => {
-		setSensors((current) =>
-			current.map((item) => (item.id === sensor.id ? sensor : item)),
-		)
+		setSensorOverrides((current) => ({
+			...current,
+			[sensor.id]: {
+				name: sensor.name,
+				type: sensor.type,
+				zoneId: sensor.zoneId,
+				unit: sensor.unit,
+				active: sensor.active,
+			},
+		}))
 	}
 
 	return {
@@ -139,6 +222,16 @@ export function useSensorData() {
 		alerts,
 		recommendations,
 		chartData: charts,
+		nodeCharts,
+		telemetry: {
+			isLoading: telemetryQuery.isLoading,
+			isFetching: telemetryQuery.isFetching,
+			isApplyingData,
+			isError: telemetryQuery.isError,
+			error: telemetryQuery.error,
+			hasData: telemetryData.measurements.length > 0,
+			refresh: refreshTelemetry,
+		},
 		sensorSummaries,
 		selectedZone,
 		selectedZoneId,
@@ -157,21 +250,36 @@ function buildSensorSummary(
 ): SensorSummary {
 	const sensorsByType = sensors.filter((sensor) => sensor.type === type)
 	const representative = sensorsByType[0]
+	if (!representative) {
+		return {
+			type,
+			label: getSensorLabel(type),
+			formattedValue: "Sin datos",
+			unit: "",
+			status: "offline",
+			statusLabel: getStatusLabel("offline"),
+			description: getSensorDescription(type),
+		}
+	}
+
 	const currentValue =
 		type === "activity"
 			? Math.max(...sensorsByType.map((sensor) => sensor.currentValue))
 			: averageValue(sensorsByType.map((sensor) => sensor.currentValue))
+	const initialStatus = getSensorStatus(representative, config)
 	const status = sensorsByType
 		.map((sensor) => getSensorStatus(sensor, config))
-		.reduce<SensorStatus>((current, next) =>
-			priority(next) > priority(current) ? next : current,
+		.reduce(
+			(current: SensorStatus, next) =>
+				priority(next) > priority(current) ? next : current,
+			initialStatus,
 		)
 
 	return {
 		type,
 		label: getSensorLabel(type),
 		formattedValue: formatSensorValue(type, currentValue),
-		unit: representative ? formatSensorUnit(representative) : "",
+		unit: formatSensorUnit(representative),
 		status,
 		statusLabel: getStatusLabel(status),
 		description: getSensorDescription(type),

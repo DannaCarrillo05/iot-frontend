@@ -1,26 +1,36 @@
+import { downsampleByVariance } from "@/lib/downsample-series"
+import { getAccentColor } from "@/lib/greenhouse-styles"
 import type {
 	NodeLatestValue,
 	NodeReading,
 	NodeVariable,
 	TelemetryNode,
 } from "@/schemas/node.schema"
-import { getAccentColor } from "@/lib/greenhouse-styles"
 
 export type NodeChartPoint = {
 	time: string
 	timestamp: string
+	ts: number
 	raw: Record<string, number>
 }
 
+const MAX_NODE_CHART_POINTS = 72
+
 const timeFormatter = new Intl.DateTimeFormat("es-CO", {
+	day: "2-digit",
 	hour: "2-digit",
 	minute: "2-digit",
+	month: "2-digit",
 	hour12: false,
-	timeZone: "UTC",
+	timeZone: "America/Bogota",
 })
 
-export function formatNodeValue(value: number, decimals: number) {
-	return value.toFixed(decimals)
+export function formatNodeValue(variable: NodeVariable, value: number) {
+	if (variable.valueType === "boolean") {
+		return value > 0 ? "Sí" : "No"
+	}
+
+	return value.toFixed(variable.decimals)
 }
 
 export function buildNodeChartSeries(
@@ -35,6 +45,7 @@ export function buildNodeChartSeries(
 		const current = grouped.get(reading.timestamp) ?? {
 			time,
 			timestamp: reading.timestamp,
+			ts: new Date(reading.timestamp).getTime(),
 			raw: {},
 		}
 
@@ -42,10 +53,18 @@ export function buildNodeChartSeries(
 		grouped.set(reading.timestamp, current)
 	}
 
-	return Array.from(grouped.values()).sort(
+	return downsampleNodeSeries(Array.from(grouped.values()).sort(
 		(left, right) =>
 			new Date(left.timestamp).getTime() - new Date(right.timestamp).getTime(),
-	)
+	))
+}
+
+function downsampleNodeSeries(series: NodeChartPoint[]) {
+	return downsampleByVariance({
+		series,
+		maxPoints: MAX_NODE_CHART_POINTS,
+		getValues: (point) => Object.values(point.raw),
+	})
 }
 
 export function getNodeLatestValues(
@@ -81,7 +100,7 @@ function buildLatestValue(
 		unit: variable.unit,
 		color,
 		value,
-		formattedValue: formatNodeValue(value, variable.decimals),
+		formattedValue: formatNodeValue(variable, value),
 		timestamp,
 	}
 }

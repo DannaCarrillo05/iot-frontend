@@ -1,6 +1,6 @@
-import type { DashboardConfig } from "@/schemas/dashboard-config.schema"
 import type { Alert, AlertKind, AlertSeverity } from "@/schemas/alert.schema"
-import type { Recommendation } from "@/schemas/recommendation.schema"
+import type { DashboardConfig } from "@/schemas/dashboard-config.schema"
+import type { Recommendation, RecommendationPriority } from "@/schemas/recommendation.schema"
 import type { Sensor, SensorStatus } from "@/schemas/sensor.schema"
 import type { Zone, ZoneStatus } from "@/schemas/zone.schema"
 import { getSensorLabel } from "./sensor-utils"
@@ -90,6 +90,11 @@ export function getSensorStatus(
 				return "warning"
 			}
 			return "normal"
+		case "voltage":
+		case "current":
+		case "power":
+		case "signal":
+			return "normal"
 	}
 }
 
@@ -108,20 +113,42 @@ export function getStatusLabel(status: SensorStatus | ZoneStatus) {
 	}
 }
 
+export function getAlertSeverityLabel(severity: AlertSeverity) {
+	switch (severity) {
+		case "critical":
+			return "Crítico"
+		case "warning":
+			return "Advertencia"
+		case "info":
+			return "Información"
+	}
+}
+
+export function getPriorityLabel(priority: RecommendationPriority) {
+	switch (priority) {
+		case "high":
+			return "Alta"
+		case "medium":
+			return "Media"
+		case "low":
+			return "Baja"
+	}
+}
+
 export function getStatusBadgeVariant(
 	status: SensorStatus | ZoneStatus | AlertSeverity,
-) {
+) : "default" | "destructive" | "outline" | "secondary" {
 	switch (status) {
 		case "critical":
-			return "destructive" as const
+			return "destructive"
 		case "warning":
-			return "secondary" as const
+			return "secondary"
 		case "info":
-			return "outline" as const
+			return "outline"
 		case "offline":
-			return "outline" as const
+			return "outline"
 		default:
-			return "default" as const
+			return "default"
 	}
 }
 
@@ -135,10 +162,15 @@ export function getZoneStatus(
 		return zone.status
 	}
 
+	const initialStatus = getSensorStatus(zoneSensors[0], config)
 	const mostSevere = zoneSensors
 		.map((sensor) => getSensorStatus(sensor, config))
-		.reduce<SensorStatus>((current, next) =>
-			sensorStatusPriority[next] > sensorStatusPriority[current] ? next : current,
+		.reduce(
+			(current: SensorStatus, next) =>
+				sensorStatusPriority[next] > sensorStatusPriority[current]
+					? next
+					: current,
+			initialStatus,
 		)
 
 	if (mostSevere === "offline") {
@@ -149,6 +181,10 @@ export function getZoneStatus(
 }
 
 export function getCropHealth(sensors: Sensor[], config: DashboardConfig) {
+	if (sensors.length === 0) {
+		return 0
+	}
+
 	const score =
 		sensors.reduce(
 			(total, sensor) => total + sensorHealthScore[getSensorStatus(sensor, config)],
@@ -254,9 +290,9 @@ export function generateAlerts(
 						id: buildAlertId(sensor, "lowWaterLevel"),
 						kind: "lowWaterLevel",
 						severity: buildAlertSeverity(status),
-						title: "Nivel de agua bajo",
+						title: "Distancia bajo umbral",
 						message:
-							"El tanque se aproxima al mínimo operativo y conviene programar recarga.",
+							"La distancia reportada por el nodo está por debajo del mínimo configurado.",
 						sensorType: sensor.type,
 						zoneId: sensor.zoneId,
 						createdAt: sensor.lastUpdated,
@@ -339,13 +375,13 @@ function getRecommendationFromAlert(alert: Alert): Recommendation {
 			}
 		case "lowWaterLevel":
 			return {
-				id: "rec-refill-tank",
-				title: "Recargar tanque",
+				id: "rec-check-distance-sensor",
+				title: "Revisar sensor de distancia",
 				description:
-					"Programa una recarga preventiva antes del siguiente ciclo de riego automático.",
+					"Verifica calibración, orientación y obstrucciones en el sensor de distancia.",
 				priority: "high",
-				actionLabel: "Recargar tanque",
-				target: "Tanque",
+				actionLabel: "Revisar sensor",
+				target: "ESP32",
 				automated: true,
 				relatedAlertIds: [alert.id],
 			}

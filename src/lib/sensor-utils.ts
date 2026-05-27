@@ -13,7 +13,11 @@ export const sensorTypeLabels: Record<SensorType, string> = {
 	temperature: "Temperatura",
 	light: "Luz",
 	activity: "Actividad",
-	waterLevel: "Nivel de agua",
+	waterLevel: "Distancia",
+	voltage: "Voltaje",
+	current: "Corriente",
+	power: "Potencia",
+	signal: "Señal",
 }
 
 export const sensorUnitLabels: Record<SensorUnit, string> = {
@@ -22,6 +26,11 @@ export const sensorUnitLabels: Record<SensorUnit, string> = {
 	lux: "lx",
 	activity: "",
 	liters: "L",
+	centimeters: "cm",
+	volt: "V",
+	ampere: "A",
+	watt: "W",
+	dbm: "dBm",
 }
 
 export const sensorDescriptions: Record<SensorType, string> = {
@@ -29,7 +38,11 @@ export const sensorDescriptions: Record<SensorType, string> = {
 	temperature: "Monitorea el rango térmico del invernadero.",
 	light: "Refleja la iluminación disponible para fotosíntesis.",
 	activity: "Indica presencia de movimiento en la zona de acceso.",
-	waterLevel: "Estima la reserva de agua disponible en el tanque.",
+	waterLevel: "Monitorea la distancia reportada por el nodo ESP32.",
+	voltage: "Voltaje eléctrico del nodo de energía.",
+	current: "Corriente eléctrica del nodo de energía.",
+	power: "Potencia eléctrica del nodo de energía.",
+	signal: "Intensidad de señal del nodo.",
 }
 
 export function formatSensorValue(type: SensorType, value: number) {
@@ -38,8 +51,14 @@ export function formatSensorValue(type: SensorType, value: number) {
 			return value > 0 ? "Detectada" : "Inactiva"
 		case "temperature":
 			return value.toFixed(1)
+		case "voltage":
+			return value.toFixed(2)
+		case "current":
+			return value.toFixed(2)
+		case "power":
+			return value.toFixed(1)
 		case "light":
-			return Math.round(value).toString()
+		case "signal":
 		default:
 			return Math.round(value).toString()
 	}

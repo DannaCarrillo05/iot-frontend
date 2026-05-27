@@ -1,4 +1,8 @@
+import { Maximize2 } from "lucide-react"
+import { useMemo, useState } from "react"
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
 	CardContent,
 	CardDescription,
@@ -12,111 +16,160 @@ import {
 } from "@/components/ui/chart"
 import { GreenhouseCard } from "@/components/ui/greenhouse-card"
 import { getPresetAccentColor, getPresetLabel } from "@/data/node-presets"
+import type { ChartRangeDays } from "@/lib/chart-range"
+import { formatChartTimeTick, getChartDomain } from "@/lib/chart-utils"
 import {
 	buildNodeChartConfig,
 	type NodeChartData,
 } from "@/lib/node-chart-utils"
-import { useMemo, useState } from "react"
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { ChartFullscreenDialog } from "./chart-fullscreen-dialog"
 import { NodeLatestValues } from "./node-latest-values"
 import { ScrollableChartContainer } from "./scrollable-chart-container"
 
 type NodeChartProps = {
 	data: NodeChartData
+	rangeDays: ChartRangeDays
 }
 
-export function NodeChart({ data }: NodeChartProps) {
+export function NodeChart({ data, rangeDays }: NodeChartProps) {
 	const { node, series, latestValues } = data
-	const chartConfig = buildNodeChartConfig(node)
+	const chartConfig = useMemo(() => buildNodeChartConfig(node), [node])
 	const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(() => new Set())
+	const [fsHiddenKeys, setFsHiddenKeys] = useState<Set<string>>(() => new Set())
+	const [fullscreenOpen, setFullscreenOpen] = useState(false)
+	const domain = getChartDomain(rangeDays)
 
 	const chartData = useMemo(
 		() =>
 			series.map((point) => ({
-				time: point.time,
+				ts: point.ts,
 				...point.raw,
 			})),
 		[series],
 	)
 
-	const toggleVariable = (key: string) => {
-		setHiddenKeys((current) => {
-			const next = new Set(current)
-			if (next.has(key)) {
-				next.delete(key)
-			} else {
-				next.add(key)
-			}
-			return next
-		})
-	}
+	const makeToggle =
+		(setter: React.Dispatch<React.SetStateAction<Set<string>>>) =>
+		(key: string) => {
+			setter((current) => {
+				const next = new Set(current)
+				if (next.has(key)) {
+					next.delete(key)
+				} else {
+					next.add(key)
+				}
+				return next
+			})
+		}
 
-	const isVisible = (key: string) => !hiddenKeys.has(key)
+	const renderChart = (heightClass: string, hidden: Set<string>, onToggle: (key: string) => void) => (
+		<div className="space-y-4">
+			<NodeLatestValues
+				values={latestValues}
+				hiddenKeys={hidden}
+				onToggle={onToggle}
+			/>
+			<ScrollableChartContainer heightClassName={heightClass}>
+				{(chartWidth) => (
+					<ChartContainer
+						config={chartConfig}
+						className="aspect-auto h-full w-full"
+						initialDimension={{ width: chartWidth, height: 320 }}
+					>
+						<LineChart data={chartData} margin={{ left: 8, right: 8 }}>
+							<CartesianGrid vertical={false} />
+							<XAxis
+								dataKey="ts"
+								type="number"
+								scale="time"
+								domain={domain}
+								tickLine={false}
+								axisLine={false}
+								interval="preserveStartEnd"
+								minTickGap={40}
+								tickFormatter={(value) => formatChartTimeTick(value, rangeDays)}
+							/>
+							<YAxis tickLine={false} axisLine={false} width={48} />
+							<ChartTooltip
+								content={
+									<ChartTooltipContent
+										indicator="line"
+										labelFormatter={(_, payload) => {
+											const ts = payload[0]?.payload?.ts
+											return ts ? formatChartTimeTick(ts, rangeDays) : ""
+										}}
+									/>
+								}
+							/>
+							{node.variables.map((variable) => (
+								<Line
+									key={variable.key}
+									type="monotone"
+									dataKey={variable.key}
+									name={variable.label}
+									stroke={`var(--color-${variable.key})`}
+									strokeWidth={2.5}
+									dot={false}
+									connectNulls
+									hide={hidden.has(variable.key)}
+								/>
+							))}
+						</LineChart>
+					</ChartContainer>
+				)}
+			</ScrollableChartContainer>
+		</div>
+	)
+
+	const accentColor = getPresetAccentColor(node.preset)
 
 	return (
-		<GreenhouseCard accentColor={getPresetAccentColor(node.preset)}>
-			<CardHeader className="space-y-3">
-				<div className="flex flex-wrap items-start justify-between gap-3">
-					<div className="space-y-1">
-						<CardTitle className="text-green-950">{node.label}</CardTitle>
-						<CardDescription className="text-green-800/70">
-							{node.description}
-						</CardDescription>
+		<>
+			<GreenhouseCard accentColor={accentColor}>
+				<CardHeader className="space-y-3">
+					<div className="flex flex-wrap items-start justify-between gap-3">
+						<div className="space-y-1">
+							<CardTitle className="text-green-950">{node.label}</CardTitle>
+							<CardDescription className="text-green-800/70">
+								{node.description}
+							</CardDescription>
+						</div>
+						<div className="flex flex-wrap items-center gap-2">
+							<Badge variant="secondary">{getPresetLabel(node.preset)}</Badge>
+							<Badge variant="outline">{node.deviceId}</Badge>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								onClick={() => setFullscreenOpen(true)}
+							>
+								<Maximize2 className="size-4" />
+								<span className="sr-only">Pantalla completa</span>
+							</Button>
+						</div>
 					</div>
-					<div className="flex flex-wrap gap-2">
-						<Badge variant="secondary">{getPresetLabel(node.preset)}</Badge>
-						<Badge variant="outline">{node.deviceId}</Badge>
-					</div>
-				</div>
-			</CardHeader>
-			<CardContent className="space-y-4">
-				<NodeLatestValues
-					values={latestValues}
-					hiddenKeys={hiddenKeys}
-					onToggle={toggleVariable}
-				/>
-
-				<ScrollableChartContainer
-					dataLength={chartData.length}
-					heightClassName="h-[320px] min-h-[320px]"
-				>
-					{(chartWidth) => (
-						<ChartContainer
-							config={chartConfig}
-							className="aspect-auto h-full min-h-[320px] w-full"
-							initialDimension={{ width: chartWidth, height: 320 }}
-						>
-							<LineChart data={chartData} margin={{ left: 8, right: 8 }}>
-								<CartesianGrid vertical={false} />
-								<XAxis
-									dataKey="time"
-									tickLine={false}
-									axisLine={false}
-									interval={0}
-									minTickGap={16}
-								/>
-								<YAxis tickLine={false} axisLine={false} width={48} />
-								<ChartTooltip
-									content={<ChartTooltipContent indicator="line" />}
-								/>
-								{node.variables.map((variable) => (
-									<Line
-										key={variable.key}
-										type="monotone"
-										dataKey={variable.key}
-										name={variable.label}
-										stroke={`var(--color-${variable.key})`}
-										strokeWidth={2.5}
-										dot={false}
-										connectNulls
-										hide={!isVisible(variable.key)}
-									/>
-								))}
-							</LineChart>
-						</ChartContainer>
+				</CardHeader>
+				<CardContent>
+					{renderChart(
+						"h-[320px] min-h-[320px]",
+						hiddenKeys,
+						makeToggle(setHiddenKeys),
 					)}
-				</ScrollableChartContainer>
-			</CardContent>
-		</GreenhouseCard>
+				</CardContent>
+			</GreenhouseCard>
+
+			<ChartFullscreenDialog
+				open={fullscreenOpen}
+				onOpenChange={setFullscreenOpen}
+				title={node.label}
+				description={node.description}
+				accentColor={accentColor}
+			>
+				{renderChart(
+					"h-[60vh] min-h-[250px]",
+					fsHiddenKeys,
+					makeToggle(setFsHiddenKeys),
+				)}
+			</ChartFullscreenDialog>
+		</>
 	)
 }

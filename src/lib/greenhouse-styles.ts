@@ -32,6 +32,10 @@ export const sensorAccentColors: Record<SensorType, string> = {
 	light: accentColors[2],
 	activity: accentColors[4],
 	waterLevel: accentColors[5],
+	voltage: accentColors[6],
+	current: accentColors[7],
+	power: accentColors[6],
+	signal: accentColors[7],
 }
 
 export const dashboardCardClass =

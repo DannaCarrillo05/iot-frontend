@@ -6,6 +6,10 @@ export const sensorTypeSchema = z.enum([
 	"light",
 	"activity",
 	"waterLevel",
+	"voltage",
+	"current",
+	"power",
+	"signal",
 ])
 
 export const sensorStatusSchema = z.enum([
@@ -21,6 +25,11 @@ export const sensorUnitSchema = z.enum([
 	"lux",
 	"activity",
 	"liters",
+	"centimeters",
+	"volt",
+	"ampere",
+	"watt",
+	"dbm",
 ])
 
 export const sensorTrendSchema = z.enum(["up", "down", "stable"])
