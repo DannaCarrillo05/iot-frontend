@@ -1,8 +1,6 @@
 import { Dialog as DialogPrimitive } from "radix-ui"
 import { X } from "lucide-react"
 import type { ReactNode } from "react"
-import { Button } from "@/components/ui/button"
-import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
 	dashboardAccentColor,
 	dashboardCardBlobLeftClass,
@@ -31,39 +29,58 @@ export function ChartFullscreenDialog({
 	return (
 		<DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
 			<DialogPrimitive.Portal>
-				<DialogPrimitive.Overlay className="data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs" />
-				<DialogPrimitive.Content
+				<DialogPrimitive.Overlay
 					className={cn(
-						"data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95",
-						"fixed left-1/2 top-1/2 z-50 flex h-[90vh] w-[94vw] max-w-[1400px] -translate-x-1/2 -translate-y-1/2 flex-col",
-						"relative overflow-hidden rounded-[2rem_1rem_2rem_1rem] border backdrop-blur-md",
-						"duration-150 focus:outline-none",
+						"fixed inset-0 z-50 bg-green-950/40",
+						"supports-backdrop-filter:bg-green-950/25 supports-backdrop-filter:backdrop-blur-sm",
+						"data-[state=open]:animate-in data-[state=open]:fade-in-0",
+						"data-[state=closed]:animate-out data-[state=closed]:fade-out-0",
+						"duration-150",
+					)}
+				/>
+				<DialogPrimitive.Content
+					aria-describedby={description ? undefined : undefined}
+					className={cn(
+						"fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2",
+						"flex h-[90vh] w-[94vw] max-w-[1400px] flex-col",
+						"overflow-hidden rounded-3xl border shadow-2xl shadow-green-950/20 backdrop-blur-md",
+						"focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600/40",
+						"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+						"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+						"duration-150",
 					)}
 					style={getAccentCardStyle(accentColor)}
 				>
 					<div className={dashboardCardBlobRightClass} />
 					<div className={dashboardCardBlobLeftClass} />
 
-					<CardHeader className="relative shrink-0">
-						<CardTitle className="text-green-950">{title}</CardTitle>
-						{description ? (
-							<CardDescription className="text-green-800/70">
-								{description}
-							</CardDescription>
-						) : null}
-						<div className="absolute right-4 top-3">
-							<DialogPrimitive.Close asChild>
-								<Button variant="ghost" size="icon-sm">
-									<X className="size-4" />
-									<span className="sr-only">Cerrar</span>
-								</Button>
-							</DialogPrimitive.Close>
+					<header className="relative flex shrink-0 items-start justify-between gap-6 border-b border-green-900/10 px-6 pb-5 pt-6 sm:px-8">
+						<div className="flex min-w-0 flex-col gap-1.5">
+							<DialogPrimitive.Title className="truncate text-xl font-semibold leading-tight text-green-950 sm:text-2xl">
+								{title}
+							</DialogPrimitive.Title>
+							{description ? (
+								<DialogPrimitive.Description className="text-sm leading-relaxed text-green-800/70">
+									{description}
+								</DialogPrimitive.Description>
+							) : null}
 						</div>
-					</CardHeader>
+						<DialogPrimitive.Close
+							aria-label="Cerrar"
+							className={cn(
+								"inline-flex size-9 shrink-0 items-center justify-center rounded-full",
+								"border border-green-900/10 bg-white/70 text-green-900",
+								"transition-colors hover:bg-white hover:text-green-950",
+								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/40",
+							)}
+						>
+							<X className="size-4" />
+						</DialogPrimitive.Close>
+					</header>
 
-					<CardContent className="relative min-h-0 flex-1 overflow-y-auto pb-4">
+					<div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pb-6 pt-5 sm:px-8 sm:pb-8">
 						{open ? children : null}
-					</CardContent>
+					</div>
 				</DialogPrimitive.Content>
 			</DialogPrimitive.Portal>
 		</DialogPrimitive.Root>

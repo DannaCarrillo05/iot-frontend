@@ -18,6 +18,7 @@ import { GreenhouseCard } from "@/components/ui/greenhouse-card"
 import { getPresetAccentColor, getPresetLabel } from "@/data/node-presets"
 import type { ChartRangeDays } from "@/lib/chart-range"
 import { formatChartTimeTick, getChartDomain } from "@/lib/chart-utils"
+import { cn } from "@/lib/utils"
 import {
 	buildNodeChartConfig,
 	type NodeChartData,
@@ -62,64 +63,89 @@ export function NodeChart({ data, rangeDays }: NodeChartProps) {
 			})
 		}
 
-	const renderChart = (heightClass: string, hidden: Set<string>, onToggle: (key: string) => void) => (
-		<div className="space-y-4">
-			<NodeLatestValues
-				values={latestValues}
-				hiddenKeys={hidden}
-				onToggle={onToggle}
-			/>
-			<ScrollableChartContainer heightClassName={heightClass}>
-				{(chartWidth) => (
-					<ChartContainer
-						config={chartConfig}
-						className="aspect-auto h-full w-full"
-						initialDimension={{ width: chartWidth, height: 320 }}
-					>
-						<LineChart data={chartData} margin={{ left: 8, right: 8 }}>
-							<CartesianGrid vertical={false} />
-							<XAxis
-								dataKey="ts"
-								type="number"
-								scale="time"
-								domain={domain}
-								tickLine={false}
-								axisLine={false}
-								interval="preserveStartEnd"
-								minTickGap={40}
-								tickFormatter={(value) => formatChartTimeTick(value, rangeDays)}
+	const renderChart = (
+		hidden: Set<string>,
+		onToggle: (key: string) => void,
+		options: { fullscreen?: boolean; heightClass?: string } = {},
+	) => {
+		const { fullscreen = false, heightClass = "h-[320px] min-h-[320px]" } = options
+		const containerClass = fullscreen
+			? "flex h-full min-h-0 flex-1 flex-col gap-3"
+			: "space-y-4"
+		const chartWrapperClass = fullscreen
+			? "min-h-0 flex-1 overflow-hidden rounded-[1rem_0.5rem_1rem_0.5rem] border border-green-100/80 bg-white/40"
+			: cn(
+					"overflow-hidden rounded-[1rem_0.5rem_1rem_0.5rem] border border-green-100/80 bg-white/40",
+					heightClass,
+				)
+
+		const chart = (
+			<ChartContainer
+				config={chartConfig}
+				className="aspect-auto h-full w-full"
+				initialDimension={{ width: 720, height: 320 }}
+			>
+				<LineChart data={chartData} margin={{ left: 8, right: 8 }}>
+					<CartesianGrid vertical={false} />
+					<XAxis
+						dataKey="ts"
+						type="number"
+						scale="time"
+						domain={domain}
+						tickLine={false}
+						axisLine={false}
+						interval="preserveStartEnd"
+						minTickGap={40}
+						tickFormatter={(value) => formatChartTimeTick(value, rangeDays)}
+					/>
+					<YAxis tickLine={false} axisLine={false} width={48} />
+					<ChartTooltip
+						content={
+							<ChartTooltipContent
+								indicator="line"
+								labelFormatter={(_, payload) => {
+									const ts = payload[0]?.payload?.ts
+									return ts ? formatChartTimeTick(ts, rangeDays) : ""
+								}}
 							/>
-							<YAxis tickLine={false} axisLine={false} width={48} />
-							<ChartTooltip
-								content={
-									<ChartTooltipContent
-										indicator="line"
-										labelFormatter={(_, payload) => {
-											const ts = payload[0]?.payload?.ts
-											return ts ? formatChartTimeTick(ts, rangeDays) : ""
-										}}
-									/>
-								}
-							/>
-							{node.variables.map((variable) => (
-								<Line
-									key={variable.key}
-									type="monotone"
-									dataKey={variable.key}
-									name={variable.label}
-									stroke={`var(--color-${variable.key})`}
-									strokeWidth={2.5}
-									dot={false}
-									connectNulls
-									hide={hidden.has(variable.key)}
-								/>
-							))}
-						</LineChart>
-					</ChartContainer>
+						}
+					/>
+					{node.variables.map((variable) => (
+						<Line
+							key={variable.key}
+							type="monotone"
+							dataKey={variable.key}
+							name={variable.label}
+							stroke={`var(--color-${variable.key})`}
+							strokeWidth={2.5}
+							dot={false}
+							connectNulls
+							hide={hidden.has(variable.key)}
+						/>
+					))}
+				</LineChart>
+			</ChartContainer>
+		)
+
+		return (
+			<div className={containerClass}>
+				<NodeLatestValues
+					values={latestValues}
+					hiddenKeys={hidden}
+					onToggle={onToggle}
+					variant={fullscreen ? "compact" : "default"}
+					className={fullscreen ? "shrink-0" : undefined}
+				/>
+				{fullscreen ? (
+					<div className={chartWrapperClass}>{chart}</div>
+				) : (
+					<ScrollableChartContainer heightClassName={heightClass}>
+						{() => chart}
+					</ScrollableChartContainer>
 				)}
-			</ScrollableChartContainer>
-		</div>
-	)
+			</div>
+		)
+	}
 
 	const accentColor = getPresetAccentColor(node.preset)
 
@@ -149,11 +175,7 @@ export function NodeChart({ data, rangeDays }: NodeChartProps) {
 					</div>
 				</CardHeader>
 				<CardContent>
-					{renderChart(
-						"h-[320px] min-h-[320px]",
-						hiddenKeys,
-						makeToggle(setHiddenKeys),
-					)}
+					{renderChart(hiddenKeys, makeToggle(setHiddenKeys))}
 				</CardContent>
 			</GreenhouseCard>
 
@@ -164,11 +186,9 @@ export function NodeChart({ data, rangeDays }: NodeChartProps) {
 				description={node.description}
 				accentColor={accentColor}
 			>
-				{renderChart(
-					"h-[60vh] min-h-[250px]",
-					fsHiddenKeys,
-					makeToggle(setFsHiddenKeys),
-				)}
+				{renderChart(fsHiddenKeys, makeToggle(setFsHiddenKeys), {
+					fullscreen: true,
+				})}
 			</ChartFullscreenDialog>
 		</>
 	)

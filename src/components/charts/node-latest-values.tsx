@@ -7,6 +7,7 @@ type NodeLatestValuesProps = {
 	hiddenKeys: Set<string>
 	onToggle: (key: string) => void
 	className?: string
+	variant?: "default" | "compact"
 }
 
 export function NodeLatestValues({
@@ -14,7 +15,53 @@ export function NodeLatestValues({
 	hiddenKeys,
 	onToggle,
 	className,
+	variant = "default",
 }: NodeLatestValuesProps) {
+	if (variant === "compact") {
+		return (
+			<div className={cn("flex flex-wrap gap-2", className)} role="group" aria-label="Mostrar u ocultar líneas">
+				{values.map((entry) => {
+					const isVisible = !hiddenKeys.has(entry.key)
+					return (
+						<button
+							key={entry.key}
+							type="button"
+							onClick={() => onToggle(entry.key)}
+							aria-pressed={isVisible}
+							className={cn(
+								"inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs transition-colors",
+								"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40",
+								isVisible
+									? "border-green-200/80 bg-white/70 text-green-900 hover:bg-white"
+									: "border-dashed border-green-200/60 bg-transparent text-green-700/55 hover:text-green-800",
+							)}
+						>
+							<span
+								className={cn("size-2.5 shrink-0 rounded-full", !isVisible && "opacity-40")}
+								style={{ backgroundColor: entry.color }}
+								aria-hidden
+							/>
+							<span className={cn("font-medium", !isVisible && "line-through")}>{entry.label}</span>
+							<span
+								className={cn(
+									"tabular-nums",
+									isVisible ? "text-green-950 font-semibold" : "text-green-700/50",
+								)}
+							>
+								{entry.formattedValue}
+								{entry.unit ? (
+									<span className={cn("ml-0.5", isVisible ? "text-green-800/70" : "text-green-700/40")}>
+										{entry.unit}
+									</span>
+								) : null}
+							</span>
+						</button>
+					)
+				})}
+			</div>
+		)
+	}
+
 	return (
 		<div className={cn("space-y-2", className)}>
 			<p className="text-xs text-green-700/60">
